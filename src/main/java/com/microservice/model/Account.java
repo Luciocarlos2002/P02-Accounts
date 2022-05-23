@@ -19,8 +19,8 @@ public class Account {
     @Id
     private String id;
     private String typeAccount;
-    private String numberAccount;
-    private int keyAccount;
+    private Long numberAccount;
+    private Integer keyAccount;
     private double availableBalanceAccount;
     @JsonFormat(pattern="dd-MM-yyyy hh:mm:ss", timezone="GMT-05:00")
     private Date dateCreationAccount = new Date();

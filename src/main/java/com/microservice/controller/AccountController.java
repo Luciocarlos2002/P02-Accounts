@@ -2,9 +2,8 @@ package com.microservice.controller;
 
 import com.microservice.model.Account;
 import com.microservice.service.AccountService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,39 +27,33 @@ public class AccountController{
 
     private final AccountService accountService;
 
+    private static final String ACCOUNT = "account";
+
     @GetMapping(value = "/allAccounts")
-    public Mono<ResponseEntity<Flux<Account>>>getAllAccount() {
-        Flux<Account> list=this.accountService.getAllAccount();
-        return  Mono.just(ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(list));
+    public Flux<Account> getAllAccounts(){
+        return accountService.getAllAccounts();
     }
 
     @GetMapping(value = "/{id}")
-    public Mono<ResponseEntity<Account>> getAccountById(@PathVariable String id){
-        var account=this.accountService.getAccountById(id);
-        return account.map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+    public Mono<Account> getAccountById(@PathVariable String id){
+        return accountService.getByIdAccount(id);
     }
 
     @PostMapping(value = "/create")
+    @CircuitBreaker(name = ACCOUNT, fallbackMethod = "account")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Account> create(@RequestBody Account account){
-        return this.accountService.createAccount(account);
+    public Mono<Account> createAccount(@RequestBody Account account){
+        return accountService.createAccount(account);
     }
 
     @PutMapping(value = "/update/{id}")
-    public Mono<ResponseEntity<Account>> updateAccountById(@PathVariable String id, @RequestBody Account account){
-
-        return this.accountService.updateAccount(id,account)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.badRequest().build());
+    @CircuitBreaker(name = ACCOUNT, fallbackMethod = "account")
+    public Mono<Account> updateAccount(@PathVariable String id, @RequestBody Account account){
+        return accountService.updateAccount(id, account);
     }
 
     @DeleteMapping(value = "/delete/{id}")
-    public Mono<ResponseEntity<Void>> deleteAccountById(@PathVariable String id){
-        return this.accountService.deleteAccount(id)
-                .map(r -> ResponseEntity.ok().<Void>build())
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+    public Mono<Void> deleteAccount(@PathVariable String id){
+        return accountService.deleteAccount(id);
     }
 }
